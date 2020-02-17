@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Email;
+use App\Services\EmailService;
 
 /**
  * Class EmailQueueSendCommand
@@ -16,7 +16,7 @@ class EmailQueueSendCommand extends Command
     /**
      *  Handle send emails from email queue
      */
-    public function handle()
+    public function handle(EmailService $emailService)
     {
         $limit = $this->argument('limit');
         $sleep = $this->argument('sleep');
@@ -24,7 +24,7 @@ class EmailQueueSendCommand extends Command
         while ($limit) {
             try {
                 // Send emails one by one for parallel commands
-                $email = Email::sendFromQueue();
+                $email = $emailService->sendFromQueue();
                 if (!$email) {
                     $this->warn('Email queue is empty');
                     break;

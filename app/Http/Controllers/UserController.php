@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Services\EmailService;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+
 
 /**
  * Class UserController
@@ -12,6 +14,16 @@ use Illuminate\Http\JsonResponse;
  */
 class UserController extends Controller
 {
+
+    /**
+     * UserController constructor.
+     *
+     * @param UserService $user
+     */
+    public function __construct(UserService $user)
+    {
+        $this->user = $user;
+    }
 
     /**
      * Activation user handler
@@ -28,7 +40,7 @@ class UserController extends Controller
         ]);
 
         // Activate user
-        User::activate(
+        $this->user->activate(
             $request->get('email_hash')
         );
 
@@ -52,7 +64,7 @@ class UserController extends Controller
         ]);
 
         // Auth user
-        $token = User::auth(
+        $token = $this->user->auth(
             $request->get('email'),
             $request->get('password')
         );
@@ -68,7 +80,7 @@ class UserController extends Controller
      * @return JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function register(Request $request): JsonResponse
+    public function register(Request $request, EmailService $email): JsonResponse
     {
         // Validate request
         $this->validate($request, [
@@ -77,10 +89,13 @@ class UserController extends Controller
         ]);
 
         // Register user
-        $user = User::register(
+        $user = $this->user->register(
             $request->get('email'),
             $request->get('password')
         );
+
+        // Activation email
+        $email->activation($user);
 
         // Success response user
         return $this->success($user);

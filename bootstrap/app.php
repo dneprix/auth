@@ -31,7 +31,8 @@ $app->singleton(
 );
 
 $app->register(Illuminate\Mail\MailServiceProvider::class);
-
+$app->register(App\Providers\UserServiceProvider::class);
+$app->register(App\Providers\EmailServiceProvider::class);
 
 $app->router->group([
     'namespace' => 'App\Http\Controllers',

@@ -2,16 +2,17 @@
 
 use App\Models\User;
 use \Illuminate\Support\Facades\Hash;
+use App\Services\UserService;
 
-class UserTest extends TestCase
+class UserServiceTest extends TestCase
 {
-      const TEST_EMAIL = 'test@email.com';
-      const TEST_PASSWORD = 'test_password';
-      const TEST_EMAIL_HASH = 'test_email_hash';
+    const TEST_EMAIL = 'test@email.com';
+    const TEST_PASSWORD = 'test_password';
+    const TEST_EMAIL_HASH = 'test_email_hash';
 
     public function testAuthSuccess()
     {
-        // Created activated user in db
+        // Create activated user in db
         $user = new User();
         $user->email = self::TEST_EMAIL;
         $user->password_hash = Hash::make(self::TEST_PASSWORD);
@@ -19,7 +20,8 @@ class UserTest extends TestCase
         $user->save();
 
         // Auth user
-        $token = User::auth(self::TEST_EMAIL, self::TEST_PASSWORD);
+        $userService = new UserService();
+        $token = $userService->auth(self::TEST_EMAIL, self::TEST_PASSWORD);
 
         // Validate Token
         $this->assertNotEmpty($token);
@@ -38,7 +40,8 @@ class UserTest extends TestCase
         $this->expectExceptionMessage(User::ERROR_NOT_FOUND);
 
         // Try to auth user with wrong pass
-        $token = User::auth(self::TEST_EMAIL, 'wrong_password');
+        $userService = new UserService();
+        $token = $userService->auth(self::TEST_EMAIL, 'wrong_password');
 
         // Validate Empty Token
         $this->assertEmpty($token);
@@ -57,7 +60,8 @@ class UserTest extends TestCase
         $this->expectExceptionMessage(User::ERROR_NOT_ACTIVATED);
 
         // Try to auth user with wrong pass
-        $token = User::auth(self::TEST_EMAIL, self::TEST_PASSWORD);
+        $userService = new UserService();
+        $token = $userService->auth(self::TEST_EMAIL, self::TEST_PASSWORD);
 
         // Validate Token
         $this->assertNotEmpty($token);
@@ -73,10 +77,11 @@ class UserTest extends TestCase
         $user->save();
 
         // User activation
-        $res = User::activate(self::TEST_EMAIL_HASH);
+        $userService = new UserService();
+        $res = $userService->activate(self::TEST_EMAIL_HASH);
 
         // Check activated user in db
-        $this->seeInDatabase(User::COLLECTION, ['email'=>self::TEST_EMAIL, 'activated_at'=>$res->activated_at]);
+        $this->seeInDatabase(User::COLLECTION, ['email' => self::TEST_EMAIL, 'activated_at' => $res->activated_at]);
     }
 
     public function testActivateFail()
@@ -91,22 +96,24 @@ class UserTest extends TestCase
         $this->expectExceptionMessage(User::ERROR_NOT_FOUND);
 
         // Try to activate wrong hash
-        User::activate('wrong_hash');
+        $userService = new UserService();
+        $userService->activate('wrong_hash');
 
         // Check user not activated
-        $this->seeInDatabase(User::COLLECTION, ['email'=>self::TEST_EMAIL, 'activated_at'=>null]);
+        $this->seeInDatabase(User::COLLECTION, ['email' => self::TEST_EMAIL, 'activated_at' => null]);
     }
 
     public function testRegisterSuccess()
     {
         // Check no user in db
-        $this->notSeeInDatabase(User::COLLECTION, ['email'=>self::TEST_EMAIL]);
+        $this->notSeeInDatabase(User::COLLECTION, ['email' => self::TEST_EMAIL]);
 
         // Register user
-        User::register(self::TEST_EMAIL, self::TEST_PASSWORD);
+        $userService = new UserService();
+        $userService->register(self::TEST_EMAIL, self::TEST_PASSWORD);
 
         // Check created user in db ant not activated
-        $this->seeInDatabase(User::COLLECTION, ['email'=>self::TEST_EMAIL, 'activated_at'=>null]);
+        $this->seeInDatabase(User::COLLECTION, ['email' => self::TEST_EMAIL, 'activated_at' => null]);
     }
 
     public function testRegisterFail()
@@ -120,7 +127,8 @@ class UserTest extends TestCase
         $this->expectExceptionMessage('duplicate key error collection');
 
         // Try to register duplicate user
-        User::register(self::TEST_EMAIL, self::TEST_PASSWORD);
+        $userService = new UserService();
+        $userService->register(self::TEST_EMAIL, self::TEST_PASSWORD);
     }
 
 }
